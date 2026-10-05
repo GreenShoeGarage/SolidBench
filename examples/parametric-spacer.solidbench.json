@@ -1,0 +1,57 @@
+{
+  "app": "SOLIDBENCH",
+  "schema": 2,
+  "version": "1.0.0",
+  "units": "mm",
+  "name": "Parametric spacer",
+  "parameters": [
+    {
+      "name": "diameter",
+      "value": "30"
+    },
+    {
+      "name": "bore",
+      "value": "8"
+    },
+    {
+      "name": "thickness",
+      "value": "12"
+    }
+  ],
+  "bodies": [
+    {
+      "id": "main",
+      "name": "Spacer",
+      "visible": true,
+      "color": "#b5b8a0"
+    }
+  ],
+  "features": [
+    {
+      "id": "outer",
+      "bodyId": "main",
+      "name": "Outside",
+      "type": "cylinder",
+      "operation": "join",
+      "radius": 15,
+      "depth": 12,
+      "expressions": {
+        "radius": "diameter / 2",
+        "depth": "thickness"
+      }
+    },
+    {
+      "id": "bore",
+      "bodyId": "main",
+      "name": "Bore",
+      "type": "cylinder",
+      "operation": "cut",
+      "radius": 4,
+      "depth": 12,
+      "expressions": {
+        "radius": "bore / 2",
+        "depth": "thickness"
+      }
+    }
+  ]
+}

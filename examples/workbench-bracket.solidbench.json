@@ -1,0 +1,70 @@
+{
+  "app": "SOLIDBENCH",
+  "schema": 1,
+  "version": "0.1.0",
+  "units": "mm",
+  "name": "Workbench bracket",
+  "features": [
+    {
+      "id": "base",
+      "name": "Base plate",
+      "type": "extrude",
+      "profile": "rectangle",
+      "plane": "XY",
+      "x": -40,
+      "y": -25,
+      "width": 80,
+      "height": 50,
+      "offset": 0,
+      "depth": 6,
+      "operation": "join"
+    },
+    {
+      "id": "wall",
+      "name": "Upright flange",
+      "type": "box",
+      "x": -40,
+      "y": 19,
+      "z": 6,
+      "width": 80,
+      "height": 6,
+      "depth": 45,
+      "operation": "join"
+    },
+    {
+      "id": "left",
+      "name": "Left mounting hole",
+      "type": "cylinder",
+      "x": -26,
+      "y": -8,
+      "z": -1,
+      "radius": 3.5,
+      "depth": 8,
+      "operation": "cut"
+    },
+    {
+      "id": "right",
+      "name": "Right mounting hole",
+      "type": "cylinder",
+      "x": 26,
+      "y": -8,
+      "z": -1,
+      "radius": 3.5,
+      "depth": 8,
+      "operation": "cut"
+    },
+    {
+      "id": "bore",
+      "name": "Upright bore",
+      "type": "extrude",
+      "profile": "circle",
+      "plane": "XZ",
+      "x": 0,
+      "y": 29,
+      "radius": 11,
+      "offset": -26,
+      "depth": 8,
+      "operation": "cut"
+    }
+  ]
+}

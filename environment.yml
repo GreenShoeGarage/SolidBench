@@ -1,0 +1,6 @@
+name: base
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - freecad=2026.09.16

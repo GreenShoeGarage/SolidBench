@@ -1,0 +1,14 @@
+services:
+  solidbench:
+    build: .
+    platform: linux/amd64
+    ports:
+      - "127.0.0.1:8080:8080"
+    restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - solidbench-data:/app/data
+volumes:
+  solidbench-data:

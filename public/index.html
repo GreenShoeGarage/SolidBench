@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#252b31" />
+    <title>SOLIDBENCH · Parametric CAD</title>
+    <link rel="icon" href="icon.svg" />
+    <link rel="stylesheet" href="style.css" />
+    <script type="importmap">
+      { "imports": { "three": "./vendor/three.module.js" } }
+    </script>
+  </head>
+  <body data-theme="light">
+    <header>
+      <div class="brand">
+        <span class="brandmark">◈</span>
+        <div>
+          SOLID<span>BENCH</span><small>GREEN SHOE GARAGE · v1.0.0</small>
+        </div>
+      </div>
+      <input
+        id="projectName"
+        aria-label="Project name"
+        maxlength="120"
+        value="Workbench bracket"
+      /><span id="saveStatus" role="status">● Saved locally</span>
+      <div class="header-actions">
+        <button id="undo" title="Undo · Ctrl/⌘ Z" aria-label="Undo">↶</button
+        ><button id="redo" title="Redo · Ctrl/⌘ Shift Z" aria-label="Redo">
+          ↷</button
+        ><button id="projectBrowser">Projects</button
+        ><button id="fileButton">File ▾</button><button id="help">?</button>
+      </div>
+    </header>
+    <nav class="ribbon" aria-label="Modeling tools">
+      <div class="workspace">
+        <strong>DESIGN</strong><small>Parametric solid</small>
+      </div>
+      <div class="toolgroup">
+        <button class="tool primary" id="sketch">
+          <span>▱<sup>+</sup></span
+          >Create sketch</button
+        ><button class="tool" data-create="box"><span>▰</span>Box</button
+        ><button class="tool" data-create="cylinder">
+          <span>◉</span>Cylinder</button
+        ><button class="tool advanced" data-create="sphere">
+          <span>◍</span>Sphere</button
+        ><small>CREATE</small>
+      </div>
+      <div class="toolgroup">
+        <button class="tool" id="revolve"><span>⟳</span>Revolve</button
+        ><button class="tool" data-create="fillet"><span>◜</span>Fillet</button
+        ><button class="tool advanced" data-create="chamfer">
+          <span>◩</span>Chamfer</button
+        ><small>MODIFY</small>
+      </div>
+      <div class="toolgroup">
+        <button class="tool" id="moreTools"><span>▦</span>Tools</button
+        ><button class="tool" id="inspect"><span>⌖</span>Inspect</button
+        ><button class="tool" id="report"><span>▤</span>Part review</button
+        ><small>REVIEW</small>
+      </div>
+      <div class="ribbon-end">
+        <label class="compact"
+          >Mode<select id="mode">
+            <option value="easy">Easy</option>
+            <option value="advanced">Advanced</option>
+          </select></label
+        ><button class="export" id="exportButton">Export part ↗</button>
+      </div>
+    </nav>
+    <main id="workbench">
+      <aside id="browserPanel" class="panel">
+        <div class="panel-heading">
+          <span>MODEL BROWSER</span
+          ><button id="closeBrowser" aria-label="Collapse model browser">
+            ‹
+          </button>
+        </div>
+        <div class="document-root">
+          ◈ <b id="treeName">Workbench bracket</b>
+        </div>
+        <div id="bodyBar"></div>
+        <div class="origin"><span>⌖</span> Origin <small>mm</small></div>
+        <input
+          id="treeSearch"
+          type="search"
+          placeholder="Find a feature…"
+          aria-label="Find a feature"
+        />
+        <div class="tree-label">FEATURES <span id="featureCount"></span></div>
+        <div id="tree"></div>
+        <button id="addFeature" class="add-feature">+ Create sketch</button>
+        <div class="browser-bottom">
+          <div class="kernel">
+            <i id="kernelDot"></i><b id="kernelState">Connecting to FreeCAD…</b>
+          </div>
+          <small id="kernelDetail">Geometry stays on your host.</small
+          ><button id="retryKernel">Reconnect</button>
+        </div>
+      </aside>
+      <section id="viewport" aria-label="3D modeling viewport">
+        <div id="canvasHost"></div>
+        <div class="view-top">
+          <button id="openBrowser" title="Toggle model browser">
+            ☰ Browser
+          </button>
+          <div class="view-label">
+            <strong id="viewTitle">Perspective</strong
+            ><span>Millimetres · Z up</span>
+          </div>
+          <button id="openInspector" title="Toggle inspector">
+            Properties ☷
+          </button>
+        </div>
+        <div id="viewCube" aria-label="Standard views">
+          <button data-view="top">TOP</button>
+          <div>
+            <button data-view="front">FRONT</button
+            ><button data-view="right">RIGHT</button>
+          </div>
+          <button data-view="iso" class="home-view">⌂ Isometric</button>
+        </div>
+        <div id="emptyState" hidden>
+          <span>▱</span>
+          <h1>Make your next part.</h1>
+          <p>
+            Draw a profile. Give it depth.<br />Refine it into something real.
+          </p>
+          <button id="emptySketch" class="primary">
+            Create your first sketch</button
+          ><button id="loadSample">Open bracket example</button>
+        </div>
+        <div id="modelError" role="alert" hidden></div>
+        <div id="busy" hidden>
+          ◌ Recomputing solid… <button id="cancelJob">Cancel</button>
+        </div>
+        <div class="view-bottom">
+          <div class="nav-tools">
+            <button id="orbit" class="active" title="Orbit · left drag">
+              ⟳ Orbit</button
+            ><button id="pan" title="Pan · right drag or Shift + drag">
+              ✥ Pan</button
+            ><button id="fit" title="Fit model · F">⛶ Fit</button
+            ><button id="projection" title="Toggle orthographic / perspective">
+              ▱ Ortho</button
+            ><button id="grid" class="active" title="Toggle grid">⊞ Grid</button
+            ><button
+              id="section"
+              title="Toggle Z section plane"
+              class="advanced"
+            >
+              ◧ Section
+            </button>
+          </div>
+          <label id="sectionControl" hidden
+            >Z slice
+            <input id="sectionZ" type="range" min="-50" max="50" step="0.1"
+          /></label>
+          <div class="axis-legend"><b>X</b><b>Y</b><b>Z</b></div>
+        </div>
+        <div class="gesture-help">
+          Drag to orbit · right drag to pan · scroll to zoom · click an edge to
+          inspect
+        </div>
+      </section>
+      <aside id="inspector" class="panel">
+        <div class="panel-heading">
+          <span id="inspectorTitle">PART PROPERTIES</span
+          ><button id="closeInspector" aria-label="Collapse properties">
+            ›
+          </button>
+        </div>
+        <div id="inspectorContent"></div>
+      </aside>
+    </main>
+    <section class="timeline-bar" aria-label="Feature history">
+      <div class="timeline-heading">
+        <b>HISTORY</b><small id="historyHint">Select a feature to edit</small>
+      </div>
+      <div id="timeline"></div>
+    </section>
+    <footer>
+      <span id="status" role="status" aria-live="polite">Ready</span
+      ><span id="geometryStats"></span
+      ><label
+        >Theme
+        <select id="theme">
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+          <option value="contrast">High contrast</option>
+        </select></label
+      >
+    </footer>
+    <dialog id="fileDialog">
+      <form method="dialog" class="dialog-top">
+        <h2>Project files</h2>
+        <button aria-label="Close">×</button>
+      </form>
+      <div class="file-grid">
+        <button id="toolsFromFile">
+          Modeling tools<small
+            >Advanced features, bodies, parameters and drawings</small
+          ></button
+        ><button id="projectsFromFile">
+          <b>Projects & revisions</b
+          ><small>Browser or self-hosted project storage</small></button
+        ><button id="newProject">
+          <b>＋ New project</b><small>Start with an empty design</small></button
+        ><button id="sample">
+          <b>◈ Bracket example</b
+          ><small>Explore editable features</small></button
+        ><button id="saveJson">
+          <b>↓ Save project JSON</b
+          ><small>Your editable source and history</small></button
+        ><button id="openJson">
+          <b>↑ Open project JSON</b
+          ><small>Restore an exported project</small></button
+        ><button id="recovery">
+          <b>↶ Previous saved state</b><small>Recover the last autosave</small>
+        </button>
+      </div>
+      <p>
+        Autosave is in this browser. Save a JSON copy to keep your project
+        outside this device.
+      </p>
+    </dialog>
+    <input
+      id="fileInput"
+      type="file"
+      accept=".json,.step,.stp,application/json"
+      hidden
+    />
+    <dialog id="featureDialog">
+      <form id="featureForm">
+        <div class="dialog-top">
+          <div>
+            <small id="featureEyebrow">ADD FEATURE</small>
+            <h2 id="featureTitle">Box</h2>
+          </div>
+          <button type="button" data-close="featureDialog" aria-label="Close">
+            ×
+          </button>
+        </div>
+        <div id="featureFields"></div>
+        <div id="featureError" class="error" role="alert"></div>
+        <div class="dialog-actions">
+          <button type="button" data-close="featureDialog">Cancel</button
+          ><button type="submit" class="primary">Apply feature</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="sketchDialog">
+      <div class="dialog-top">
+        <div>
+          <small>SKETCH → SOLID</small>
+          <h2 id="sketchHeading">Create a profile</h2>
+        </div>
+        <button data-close="sketchDialog" aria-label="Close">×</button>
+      </div>
+      <div class="sketch-layout">
+        <div>
+          <div class="sketch-tools">
+            <button data-shape="rectangle" class="active">▱ Rectangle</button
+            ><button data-shape="circle">○ Circle</button
+            ><button data-shape="polygon">⬡ Polygon</button
+            ><button id="clearSketch">Clear</button
+            ><button id="constraintsButton">Constraints</button>
+          </div>
+          <svg
+            id="sketchCanvas"
+            viewBox="-60 -45 120 90"
+            role="img"
+            aria-label="Sketch plane. Click to draw; use numeric fields as a keyboard alternative."
+          ></svg>
+          <p id="sketchHint">
+            Click two opposite corners. Or enter dimensions on the right.
+          </p>
+        </div>
+        <form id="sketchForm">
+          <label
+            >Feature name<input
+              name="name"
+              value="Extrude"
+              maxlength="120"
+              required /></label
+          ><label
+            >Plane<select name="plane">
+              <option>XY</option>
+              <option>XZ</option>
+              <option>YZ</option>
+            </select></label
+          >
+          <div class="field-row">
+            <label
+              >Plane offset · mm<input
+                name="offset"
+                type="number"
+                value="0"
+                step="any"
+                required /></label
+            ><label
+              >Grid snap · mm<input
+                name="snap"
+                type="number"
+                value="1"
+                min="0.1"
+                max="20"
+                step="any"
+                required
+            /></label>
+          </div>
+          <div id="sketchNumeric"></div>
+          <label id="depthLabel"
+            >Depth · mm<input
+              name="depth"
+              type="number"
+              value="8"
+              min="0.01"
+              max="10000"
+              step="any"
+              required /></label
+          ><label id="angleLabel" hidden
+            >Angle · degrees<input
+              name="angle"
+              type="number"
+              value="360"
+              min="1"
+              max="360"
+              step="any" /></label
+          ><label
+            >Operation<select name="operation">
+              <option value="join">Join / add material</option>
+              <option value="cut">Cut / remove material</option>
+              <option value="intersect">Intersect / keep overlap</option>
+            </select></label
+          >
+          <p id="revolveNote" hidden>
+            Revolves about the sketch’s Y axis. Keep the profile entirely on one
+            side of X = 0.
+          </p>
+          <p class="error" id="sketchError" role="alert"></p>
+          <button class="primary" type="submit">Create solid</button>
+        </form>
+      </div>
+    </dialog>
+    <dialog id="exportDialog">
+      <form method="dialog" class="dialog-top">
+        <h2>Export your part</h2>
+        <button aria-label="Close">×</button>
+      </form>
+      <p>
+        Every export rebuilds the active history. Suppressed features are
+        omitted. FCStd includes the full document.
+      </p>
+      <label
+        >STEP / STL / BRep scope
+        <select id="exportScope">
+          <option value="">All visible bodies</option>
+        </select></label
+      >
+      <div class="file-grid">
+        <button data-export="step">
+          <b>STEP · .step</b
+          ><small>Exact BRep solid for other CAD tools</small></button
+        ><button data-export="stl">
+          <b>STL · .stl</b
+          ><small>Triangulated surface for slicing · mm</small></button
+        ><button data-export="FCStd">
+          <b>FreeCAD · .FCStd</b
+          ><small>Native feature objects and sketches</small></button
+        ><button data-export="brep">
+          <b>BREP · .brep</b
+          ><small>Native boundary representation</small></button
+        ><button id="exportJson">
+          <b>Project · .json</b><small>Reopen and edit in SOLIDBENCH</small>
+        </button>
+      </div>
+      <p id="exportStatus" role="status"></p>
+    </dialog>
+    <dialog id="helpDialog">
+      <form method="dialog" class="dialog-top">
+        <h2>From a sketch to a real part.</h2>
+        <button aria-label="Close">×</button>
+      </form>
+      <div class="help-copy">
+        <p>
+          <b>1. Sketch</b> a rectangle, circle, or closed polygon on XY, XZ, or
+          YZ. Numeric dimensions work without drawing.
+        </p>
+        <p>
+          <b>2. Extrude</b> to add material, cut it away, or keep an
+          intersection. A cut extends in the positive normal direction from the
+          selected plane offset. XZ’s normal is −Y; YZ’s normal is +X.
+        </p>
+        <p>
+          <b>3. Refine</b> by editing any feature in the browser or timeline.
+          Select an edge, then add a fillet or chamfer.
+        </p>
+        <p>
+          <b>4. Export</b> a STEP, STL, native FreeCAD file, or editable JSON
+          project.
+        </p>
+        <h3>Navigation</h3>
+        <p>
+          Left drag: unrestricted orbit. Right drag or Shift + drag: pan. Wheel
+          / pinch: zoom. F: fit. 1 / 2 / 3 / 0: top / front / right / isometric.
+          Ctrl or ⌘ Z: undo. Delete: delete selected feature (undoable). Escape:
+          close dialogs.
+        </p>
+        <h3>Hosting & privacy</h3>
+        <p>
+          Run the included local server or Docker container. Geometry runs in
+          FreeCAD on that host; browser state stays in this browser. No
+          telemetry or external assets. An optional host password protects
+          remote access. The interface and JSON editing can reopen offline after
+          first load; recomputing or exporting solids requires your FreeCAD host
+          to be reachable.
+        </p>
+        <h3>v1.0 boundaries</h3>
+        <p>
+          Use Tools for lofts, circular-profile sweeps, shells, drafts,
+          patterns, body operations, parameters, assemblies and drawings. Sketch
+          constraints are solved by FreeCAD. Assemblies support placement and a
+          grounded fixed, revolute or slider coordinate per component; they do
+          not simulate forces or solve a network of mates. STEP imports retain
+          solids without reconstructing original history. CAM, FEA and sheet
+          metal are outside v1.0. See the included capability matrix for precise
+          limits.
+        </p>
+        <p><button id="signOutHost">Sign out of this host</button></p>
+        <h3>Direct launch</h3>
+        <p>
+          Install the pinned FreeCAD environment once, then use start.command,
+          start.sh or start.bat. No Docker is required. The host needs to stay
+          running for geometry and exports.
+        </p>
+      </div>
+    </dialog>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

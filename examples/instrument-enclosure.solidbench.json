@@ -1,0 +1,117 @@
+{
+  "app": "SOLIDBENCH",
+  "schema": 2,
+  "version": "1.0.0",
+  "units": "mm",
+  "name": "Instrument enclosure",
+  "parameters": [
+    {
+      "name": "wall",
+      "value": "2"
+    }
+  ],
+  "bodies": [
+    {
+      "id": "case",
+      "name": "Housing",
+      "visible": true,
+      "color": "#8fa9b4"
+    },
+    {
+      "id": "lid",
+      "name": "Cover",
+      "visible": true,
+      "color": "#bac69a",
+      "placement": {
+        "x": 0,
+        "y": 0,
+        "z": 20,
+        "angle": 0
+      },
+      "joint": {
+        "kind": "slider",
+        "ax": 0,
+        "ay": 0,
+        "az": 1,
+        "value": 5,
+        "min": 0,
+        "max": 50
+      }
+    }
+  ],
+  "features": [
+    {
+      "id": "caseblank",
+      "bodyId": "case",
+      "name": "Housing blank",
+      "type": "box",
+      "x": -30,
+      "y": -20,
+      "z": 0,
+      "width": 60,
+      "height": 40,
+      "depth": 20,
+      "operation": "join"
+    },
+    {
+      "id": "shell",
+      "bodyId": "case",
+      "name": "Open enclosure",
+      "type": "shell",
+      "thickness": 2,
+      "faces": [
+        6
+      ],
+      "expressions": {
+        "thickness": "wall"
+      }
+    },
+    {
+      "id": "cover",
+      "bodyId": "lid",
+      "name": "Cover plate",
+      "type": "box",
+      "x": -30,
+      "y": -20,
+      "z": 0,
+      "width": 60,
+      "height": 40,
+      "depth": 2,
+      "operation": "join",
+      "expressions": {
+        "depth": "wall"
+      }
+    },
+    {
+      "id": "leftport",
+      "bodyId": "lid",
+      "name": "Left cover hole",
+      "type": "cylinder",
+      "x": -23,
+      "y": 0,
+      "z": -1,
+      "radius": 2.5,
+      "depth": 4,
+      "operation": "cut",
+      "expressions": {
+        "depth": "wall+2"
+      }
+    },
+    {
+      "id": "rightport",
+      "bodyId": "lid",
+      "name": "Right cover hole",
+      "type": "cylinder",
+      "x": 23,
+      "y": 0,
+      "z": -1,
+      "radius": 2.5,
+      "depth": 4,
+      "operation": "cut",
+      "expressions": {
+        "depth": "wall+2"
+      }
+    }
+  ],
+  "drawingNote": "Dimensions in mm. Cover shown 5 mm above the housing. Review fastener and fit details before fabrication."
+}
